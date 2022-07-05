@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Carter+One&family=Montserrat:wght@100&family=Ubuntu:wght@300&display=swap');
+.form-row{
+  width: 650px;
+}
+.ar{
+  position: absolute;
+  left: 86.5rem;
+}
+ .navbar{
+   background-color: green;
+ }
+ .container{
+  margin-top: 110px !important;
+ }
+ .ft{
+   position: absolute;
+   left: 40rem;
+ }
