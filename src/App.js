@@ -18,7 +18,7 @@ import NewEvent from './components/NewEvent';
 const ERC20_DECIMALS = 18;
 
 
-const contractAddress = "0x66d72b857FBF850f3486aB4421DB21841655d2b9";
+const contractAddress = "0x944878fC6A1f111f36BB3D698694a706841b6735";
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
 
 
@@ -77,15 +77,15 @@ function App() {
      for (let index = 0; index < eventsLength; index++) {
        console.log(eventsLength);
        let _events = new Promise(async (resolve, reject) => {
-       let event = await contract.methods.getEvent(index).call();
-
+       let _event = await contract.methods.getEvent(index).call();
+        const event = _event[0]
        resolve({
         index: index,
         owner: event[0],
         image: event[1],
         theme: event[2],
          venue: event[3],
-         Price: event[4],
+         price: event[4],
        interested: event[5]
        
                  
@@ -94,6 +94,7 @@ function App() {
     _eventt.push(_events);
   }
   const _events = await Promise.all(_eventt);
+  console.log(_events)
   setEvents(_events);
   console.log(events)
   
