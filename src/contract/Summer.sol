@@ -1,10 +1,10 @@
- // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 pragma solidity >=0.7.0 <0.9.0;
- 
+
 
 interface IERC20Token {
-   function transfer(address, uint256) external returns (bool);
+    function transfer(address, uint256) external returns (bool);
 
     function approve(address, uint256) external returns (bool);
 
@@ -29,23 +29,29 @@ interface IERC20Token {
 }
 
 contract   Summer {
-    
-    
+
+
     uint public eventsLength = 0;
-    address internal cUsdTokenAddress = 
+    address internal cUsdTokenAddress =
     0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1;
 
+    address adminAddress;
 
 
-     struct  Event {
+    constructor(){
+        adminAddress = msg.sender;
+    }
+
+    struct  Event {
         address payable owner;
         string image;
         string theme;
         string venue;
         uint price;
         uint interested;
-     }
-  mapping(uint256 => Event) internal events;
+        bool flagged;
+    }
+    mapping(uint256 => Event) internal events;
     // keeps track of Events state, whether they have already ended or not
     mapping(uint256 => bool) private over;
     // keeps track of users that have shown interest in a specific event
@@ -53,7 +59,7 @@ contract   Summer {
     // keeps track of users that have booked an event
     mapping(uint256 => mapping(address => bool)) private booked;
 
-      event EventAdded(uint _index, address owner);
+    event EventAdded(uint _index, address owner);
     event EventEnded(uint _index, uint Interested);
     event Booked(uint _index, address user, bool didBook);
     event Interest(uint _index, address user, bool interest);
@@ -63,12 +69,25 @@ contract   Summer {
         require(!over[_index], "Already ended");
         _;
     }
+
+    //  ensure only admin can call functions
+    modifier isAdmin(){
+        require(msg.sender == adminAddress, "only callable by admin");
+        _;
+    }
+
+    //  ensure an event is not flagged
+    modifier notFlagged(uint256 _index){
+        require(!events[_index].flagged, "this event ahs been flagged");
+        _;
+    }
+
     // creates an event
 
 
 
-    
-  function addEvent(
+
+    function addEvent(
         string memory _image,
         string memory _theme,
         string memory _venue,
@@ -86,17 +105,18 @@ contract   Summer {
             _theme,
             _venue,
             _price,
-            0
+            0,
+            false
         );
         over[id] = false;
         emit EventAdded(id, msg.sender);
     }
- 
-  function getEvent(uint256 _index)
-        public
-        view
-        isOver(_index)
-        returns (Event memory, bool)
+
+    function getEvent(uint256 _index)
+    public
+    view
+    isOver(_index)
+    returns (Event memory, bool)
     {
         return (events[_index], shownInterest[_index][msg.sender]);
     }
@@ -109,19 +129,19 @@ contract   Summer {
         emit EventEnded(_index, interests);
     }
 
-   // saves interest to an event
-    function Interested(uint256 _index) public isOver(_index) {
+    // saves interest to an event
+    function Interested(uint256 _index) public notFlagged(_index) isOver(_index) {
         require(
             shownInterest[_index][msg.sender] == false,
             "You have already shown interest in this event"
         );
-           shownInterest[_index][msg.sender] = true;
+        shownInterest[_index][msg.sender] = true;
         emit Interest(_index, msg.sender, true);
-    
-        
-     }
 
-       // removes interest from an event
+
+    }
+
+    // removes interest from an event
     function unInterested(uint256 _index) public isOver(_index) {
         require(
             shownInterest[_index][msg.sender] == true,
@@ -132,10 +152,11 @@ contract   Summer {
         emit Interest(_index, msg.sender, false);
     }
 
-       // allows the event owner to change the venue
+    // allows the event owner to change the venue
     function ChangeVenue(uint256 _index, string memory _venue)
-        public
-        isOver(_index)
+    public
+    notFlagged(_index)
+    isOver(_index)
     {
         require(
             msg.sender == events[_index].owner,
@@ -143,22 +164,22 @@ contract   Summer {
         );
         require(bytes(_venue).length > 0, "Invalid venue");
         events[_index].venue = _venue;
-    
+
 
     }
 
-     function geteventsLength() public view returns (uint) {
+    function geteventsLength() public view returns (uint)  {
         return (eventsLength);
     }
-   // allows d user to book an event
-    function bookEvent(uint256 _index) public payable isOver(_index) {
+    // allows d user to book an event
+    function bookEvent(uint256 _index) public payable isOver(_index) notFlagged(_index) {
         require(
             msg.sender != events[_index].owner,
             "Creator can't book his own event"
         );
         require(!booked[_index][msg.sender], "Already booked event");
         require(
-                IERC20Token(cUsdTokenAddress).transferFrom(
+            IERC20Token(cUsdTokenAddress).transferFrom(
                 msg.sender,
                 events[_index].owner,
                 events[_index].price
@@ -166,8 +187,19 @@ contract   Summer {
             "Transfer failed."
         );
 
-        
-         
+    }
+
+    // admin functionalities
+
+
+    // flag an event
+    function flagEvent (uint256 _index) public isAdmin {
+        events[_index].flagged = true;
+    }
+
+    // unflag an event
+    function unFlagEvent (uint256 _index) public isAdmin {
+        events[_index].flagged = false;
     }
 }
 
